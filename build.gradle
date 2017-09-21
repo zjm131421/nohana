@@ -1,0 +1,108 @@
+import java.text.SimpleDateFormat
+
+group 'com.nohana'
+version '1.0'
+
+apply plugin: 'java'
+
+//noinspection GroovyUnusedAssignment
+sourceCompatibility = 1.8
+//noinspection GroovyUnusedAssignment
+targetCompatibility = 1.8
+
+//noinspection GroovyAssignabilityCheck
+compileJava {
+    options.encoding = 'UTF-8'
+    options.compilerArgs << "-Xlint:unchecked" << "-parameters" << "-Xlint:deprecation"
+}
+
+repositories {
+    maven { url 'http://maven.aliyun.com/nexus/content/groups/public/' }
+}
+
+dependencies {
+    // spring
+    compile("org.springframework:spring-context:4.2.7.RELEASE")
+    compile('org.springframework:spring-jdbc:4.2.7.RELEASE')
+    compile('org.springframework:spring-tx:4.2.7.RELEASE')
+    compile('org.springframework.amqp:spring-rabbit:1.6.1.RELEASE')
+
+    // java lang extension
+    compile('commons-lang:commons-lang:2.6')
+    compile('commons-collections:commons-collections:3.2.2')
+    compile('commons-io:commons-io:2.4')
+
+    // xml processing
+    compile group: 'xom', name: 'xom', version: '1.2.5'
+
+    // http utils
+    compile('org.apache.httpcomponents:httpclient:4.5.2')
+
+    // json support
+    compile('com.google.code.gson:gson:2.6.2')
+
+    // netty
+    compile group: 'io.netty', name: 'netty-all', version: '4.1.4.Final'
+
+    // log4j + servlet support
+    compile('org.apache.logging.log4j:log4j-core:2.5')
+    compile('org.apache.logging.log4j:log4j-api:2.5')
+
+    // configuration support
+    compile('commons-configuration:commons-configuration:1.10')
+
+    // connection pool
+    compile('com.zaxxer:HikariCP:2.4.5')
+    compile('org.slf4j:slf4j-simple:1.7.19')
+
+    // mysql driver
+    runtime ('mysql:mysql-connector-java:5.1.38')
+
+    // redis client
+    compile 'redis.clients:jedis:2.8.0'
+
+    //mime type util
+    compile ('eu.medsea.mimeutil:mime-util:2.1.3') {
+        exclude group: 'org.slf4j'
+    }
+
+    testCompile group: 'junit', name: 'junit', version: '4.11'
+}
+
+static def getCurrentTimestamp ()
+{
+    Date today = new Date ()
+    SimpleDateFormat df = new SimpleDateFormat ("yyyy-MM-dd HH:mm:ss")
+    return df.format (today)
+}
+
+jar {
+    manifest {
+        attributes(
+                "Class-Path": configurations.runtime.collect { it.getName() }.join(' '),
+                "Main-Class": "com.johana.adapter.NettyWorker",
+                "Build-Time": getCurrentTimestamp()
+        )
+    }
+}
+
+task clearDeploy() {
+    doLast {
+        println "clearing deploy folder..."
+        delete "$buildDir/../deploy/config", fileTree("$buildDir/../deploy") { include '*.jar' }
+    }
+}
+
+task copyToLib(dependsOn: 'jar') {
+    doLast {
+        println "copy jar files to deploy folder..."
+        copy {
+            from configurations.runtime
+            into "$buildDir/../deploy"
+        }
+        copy {
+            from "$buildDir/libs"
+            into "$buildDir/../deploy"
+        }
+    }
+}
