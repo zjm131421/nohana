@@ -6,7 +6,7 @@ import org.apache.commons.lang.exception.ExceptionUtils;
 public class ExceptionHelpers {
 
     public static String getRootMessage(Throwable e){
-        Throwable root = ExceptionUtils.getRootCause(e); //获取根的原因
+        Throwable root = ExceptionUtils.getRootCause(e); //获取异常根的原因
         root = (null == root ? e : root);
         return getMessage(root);
     }
